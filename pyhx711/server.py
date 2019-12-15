@@ -19,7 +19,7 @@ def gen_app(config_object=None, logsetting_file=None, parameter_file=None):
         with open(os.getenv('HX711SENSOR_LOGGER'), 'r') as fin:
             dictConfig(json.load(fin))
     app = Flask(__name__)
-    app.config.from_object('hx711.config')
+    app.config.from_object('pyhx711.config')
     if os.getenv('HX711SENSOR') is not None:
         app.config.from_envvar('HX711SENSOR')
     if config_object is not None:
