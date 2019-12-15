@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-from hx711 import (
+from pyhx711 import (
     __version__, __author__, __description__,
     __long_description__, __email__, __package_name__
 )
