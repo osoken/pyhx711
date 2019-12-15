@@ -143,4 +143,4 @@ class HX711(threading.Thread):
         while True:
             self.__renew()
             self.__hook(dict(zip(self.attributes(), self.values())))
-            time.sleep(0.1)
+            time.sleep(0.2)
