@@ -9,4 +9,4 @@ __author__ = u'osoken'
 __email__ = u'osoken.devel@outlook.jp'
 __version__ = '0.0.1'
 
-__package_name__ = u'hx711'
+__package_name__ = u'pyhx711'
