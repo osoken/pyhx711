@@ -91,7 +91,8 @@ class HX711(threading.Thread):
             return json.dump({
                 'offset': self.offset,
                 'reference_unit': self.reference_unit,
-                'times': self.times
+                'times': self.times,
+                'gain': self.gain
             }, f)
         if isinstance(f, str):
             with open(f, 'w') as fout:
@@ -107,6 +108,8 @@ class HX711(threading.Thread):
                 self.reference_unit = obj['reference_unit']
             if 'times' in obj:
                 self.times = obj['times']
+            if 'gain' in obj:
+                self.gain = obj['gain']
             return self
         if isinstance(f, str):
             with open(f) as fin:
