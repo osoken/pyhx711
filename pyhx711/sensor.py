@@ -34,7 +34,7 @@ class HX711(threading.Thread):
 
     @property
     def gain(self):
-        return self.gain_bits_map.inverse(self.__gain)
+        return self.gain_bits_map.inverse[self.__gain]
 
     @gain.setter
     def gain(self, value):
