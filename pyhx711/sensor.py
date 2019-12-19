@@ -128,6 +128,9 @@ class HX711(threading.Thread):
     def values(self):
         return (self.weight, self.raw_value)
 
+    def mod_weight_offset(self, value):
+        self.offset = self.offset + value / self.reference_unit
+
     @property
     def raw_value(self):
         return self.__last_value

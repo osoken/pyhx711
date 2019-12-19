@@ -95,6 +95,18 @@ def gen_app(config_object=None, logsetting_file=None, parameter_file=None):
             'gain': sensor.gain
         })
 
+    @app.route('/api/mod-weight', methods=['POST'])
+    def api_mod_weight():
+        weight = request.get_json()['weight']
+        sensor.mod_weight_offset(weight)
+        if os.getenv('HX711SENSOR_PARAMETER') is not None:
+            sensor.export_parameters(os.getenv('HX711SENSOR_PARAMETER'))
+        if parameter_file is not None:
+            sensor.export_parameters(parameter_file)
+        return jsonify({
+            'offset': sensor.offset
+        })
+
     @app.route('/api/reset', methods=['POST'])
     def api_reset():
         sensor.force_reset()
