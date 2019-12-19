@@ -134,7 +134,7 @@ class HX711(threading.Thread):
 
     @property
     def weight(self):
-        return (self.raw_value * self.__reference_unit) + self.__offset
+        return (self.raw_value + self.offset) * self.__reference_unit
 
     def __getitem__(self, attr):
         if attr in self.attributes():
