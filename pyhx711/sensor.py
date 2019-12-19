@@ -13,7 +13,7 @@ class HX711(threading.Thread):
 
     def __init__(
                 self, dout, pd_sck, gain, offset=0.0, reference_unit=1.0,
-                hook=None
+                times=5, hook=None
             ):
         super(HX711, self).__init__()
         self.__dout = dout
@@ -22,12 +22,26 @@ class HX711(threading.Thread):
         self.__offset = offset
         self.__reference_unit = reference_unit
         self.__latest_value = 0.0
+        self.__times = times
+        self.__force_reset = False
         self.__hook = hook if hook is not None else lambda v: None
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.__pd_sck, GPIO.OUT)
         GPIO.setup(self.__dout, GPIO.IN)
         self.reset()
+        time.sleep(0.1)
         self.__renew()
+
+    @property
+    def gain(self):
+        return self.gain_bits_map.inverse(self.__gain)
+
+    @gain.setter
+    def gain(self, value):
+        v = int(value)
+        if v not in self.gain_bits_map:
+            raise ValueError('gain must be one of 128, 64 and 32')
+        self.__gain = self.gain_bits_map[v]
 
     @property
     def reference_unit(self):
@@ -36,6 +50,17 @@ class HX711(threading.Thread):
     @reference_unit.setter
     def reference_unit(self, val):
         self.__reference_unit = float(val)
+
+    @property
+    def times(self):
+        return self.__times
+
+    @times.setter
+    def times(self, value):
+        v = int(value)
+        if v <= 0:
+            raise ValueError('times must be positive integer')
+        self.__times = v
 
     @property
     def offset(self):
@@ -64,8 +89,9 @@ class HX711(threading.Thread):
     def export_parameters(self, f):
         if hasattr(f, 'write') and callable(f.write):
             return json.dump({
-                'offset': self.__offset,
-                'reference_unit': self.__reference_unit
+                'offset': self.offset,
+                'reference_unit': self.reference_unit,
+                'times': self.times
             }, f)
         if isinstance(f, str):
             with open(f, 'w') as fout:
@@ -76,14 +102,19 @@ class HX711(threading.Thread):
         if hasattr(f, 'read') and callable(f.read):
             obj = json.load(f)
             if 'offset' in obj:
-                self.__offset = obj['offset']
+                self.offset = obj['offset']
             if 'reference_unit' in obj:
-                self.__reference_unit = obj['reference_unit']
+                self.reference_unit = obj['reference_unit']
+            if 'times' in obj:
+                self.times = obj['times']
             return self
         if isinstance(f, str):
             with open(f) as fin:
                 return self.import_parameters(fin)
         raise ValueError(type(f))
+
+    def force_reset(self):
+        self.__force_reset = True
 
     def is_ready(self):
         return GPIO.input(self.__dout) == 0
@@ -116,9 +147,15 @@ class HX711(threading.Thread):
     def tare(self):
         self.set_offset(self.weight)
 
-    def get_median3(self):
-        buf = sorted(self.get_raw_value() for i in range(3))
-        return buf[1]
+    def get_median(self, times=5):
+        if times <= 0:
+            raise ValueError('times must be positive integer')
+        if times == 1:
+            return self.get_raw_value()
+        buf = sorted(self.get_raw_value() for i in range(times))
+        if times % 2 == 0:
+            return buf[times // 2]
+        return (buf[times // 2] + buf[times // 2 + 1]) / 2
 
     def power_down(self):
         GPIO.output(self.__pd_sck, False)
@@ -134,14 +171,17 @@ class HX711(threading.Thread):
         self.power_up()
 
     def __renew(self):
-        self.__last_value = self.get_median3()
+        self.__last_value = self.get_median(self.__times)
 
     def run(self):
         self.reset()
         while not self.is_ready():
             time.sleep(0.0001)
         while True:
+            if self.__force_reset:
+                self.__force_reset = False
+                self.reset()
+                time.sleep(0.2)
             self.__renew()
             self.__hook(dict(zip(self.attributes(), self.values())))
-            self.reset()
             time.sleep(0.2)

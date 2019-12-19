@@ -71,4 +71,28 @@ def gen_app(config_object=None, logsetting_file=None, parameter_file=None):
             'offset': sensor.offset
         })
 
+    @app.route('/api/times', methods=['GET', 'POST'])
+    def api_times():
+        if request.method == 'POST':
+            sensor.times = request.get_json()['times']
+            if os.getenv('HX711SENSOR_PARAMETER') is not None:
+                sensor.export_parameters(os.getenv('HX711SENSOR_PARAMETER'))
+            if parameter_file is not None:
+                sensor.export_parameters(parameter_file)
+        return jsonify({
+            'times': sensor.times
+        })
+
+    @app.route('/api/gain', methods=['GET', 'POST'])
+    def api_gain():
+        if request.method == 'POST':
+            sensor.gain = request.get_json()['gain']
+            if os.getenv('HX711SENSOR_PARAMETER') is not None:
+                sensor.export_parameters(os.getenv('HX711SENSOR_PARAMETER'))
+            if parameter_file is not None:
+                sensor.export_parameters(parameter_file)
+        return jsonify({
+            'gain': sensor.gain
+        })
+
     return app
