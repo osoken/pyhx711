@@ -95,4 +95,9 @@ def gen_app(config_object=None, logsetting_file=None, parameter_file=None):
             'gain': sensor.gain
         })
 
+    @app.route('/api/reset', methods=['POST'])
+    def api_reset():
+        sensor.force_reset()
+        return jsonify({'result': 'ok'})
+
     return app
